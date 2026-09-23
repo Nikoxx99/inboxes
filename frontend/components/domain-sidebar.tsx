@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useId } from "react";
 import { toast } from "sonner";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -40,6 +40,7 @@ import {
   Info,
   XCircle,
   Clock,
+  ChevronDown,
 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -69,27 +70,134 @@ function OrganizationSwitcher({
   showCreate: boolean;
   onChange: (organizationId: string) => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listboxRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
+  const selectedIndex = Math.max(0, organizations.findIndex((organization) => organization.id === currentOrganizationId));
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    listboxRef.current?.focus();
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, [menuOpen]);
+
+  const openMenu = (index = selectedIndex) => {
+    setActiveIndex(index);
+    setMenuOpen(true);
+  };
+
+  const selectOrganization = (organizationId: string) => {
+    setMenuOpen(false);
+    triggerRef.current?.focus();
+    if (organizationId !== currentOrganizationId) onChange(organizationId);
+  };
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  const moveActiveOption = (direction: 1 | -1) => {
+    setActiveIndex((index) => (index + direction + organizations.length) % organizations.length);
+  };
+
   if (organizations.length <= 1 && !showCreate) return null;
 
   return (
     <div className="px-4 py-3 border-b space-y-1.5">
       {organizations.length > 1 && (
-        <label className="block text-xs text-muted-foreground">
+        <div ref={rootRef} className="relative block text-xs text-muted-foreground">
           Workspace
-          <select
-            aria-label="Workspace"
-            value={currentOrganizationId}
-            onChange={(event) => onChange(event.target.value)}
+          <button
+            ref={triggerRef}
+            type="button"
+            aria-label={`Workspace: ${organizations[selectedIndex]?.name ?? ""}`}
+            aria-haspopup="listbox"
+            aria-expanded={menuOpen}
+            aria-controls={menuOpen ? listboxId : undefined}
+            onClick={() => (menuOpen ? setMenuOpen(false) : openMenu())}
+            onBlur={(event) => {
+              if (!rootRef.current?.contains(event.relatedTarget as Node | null)) setMenuOpen(false);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                if (!menuOpen) openMenu(event.key === "ArrowDown" ? selectedIndex : (selectedIndex - 1 + organizations.length) % organizations.length);
+              } else if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                if (!menuOpen) openMenu();
+              } else if (event.key === "Escape" && menuOpen) {
+                event.preventDefault();
+                closeMenu();
+              }
+            }}
             disabled={switching}
-            className="mt-1.5 h-9 w-full min-w-0 rounded-md border bg-background px-2.5 text-sm text-foreground disabled:opacity-50"
+            className="mt-1.5 flex h-9 w-full min-w-0 items-center justify-between gap-2 rounded-md border bg-background px-2.5 text-sm text-foreground transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {organizations.map((organization) => (
-              <option key={organization.id} value={organization.id}>
-                {organization.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            <span className="min-w-0 truncate text-left">{organizations[selectedIndex]?.name}</span>
+            <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", menuOpen && "rotate-180")} aria-hidden="true" />
+          </button>
+          {menuOpen && (
+            <div
+              ref={listboxRef}
+              id={listboxId}
+              role="listbox"
+              aria-label="Workspaces"
+              aria-activedescendant={`${listboxId}-option-${activeIndex}`}
+              tabIndex={-1}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                  event.preventDefault();
+                  moveActiveOption(event.key === "ArrowDown" ? 1 : -1);
+                } else if (event.key === "Home" || event.key === "End") {
+                  event.preventDefault();
+                  setActiveIndex(event.key === "Home" ? 0 : organizations.length - 1);
+                } else if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  selectOrganization(organizations[activeIndex].id);
+                } else if (event.key === "Escape") {
+                  event.preventDefault();
+                  closeMenu();
+                }
+              }}
+              onBlur={(event) => {
+                // Keep the list open long enough for a pointer click on the trigger
+                // to toggle it closed; focus moving anywhere else dismisses it.
+                if (event.relatedTarget !== triggerRef.current) setMenuOpen(false);
+              }}
+              className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-lg"
+            >
+              {organizations.map((organization, index) => (
+                <div
+                  key={organization.id}
+                  id={`${listboxId}-option-${index}`}
+                  role="option"
+                  aria-selected={organization.id === currentOrganizationId}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => selectOrganization(organization.id)}
+                  className={cn(
+                    "flex w-full min-w-0 cursor-pointer items-center rounded-sm px-2.5 py-1.5 text-left text-sm outline-none transition-colors",
+                    index === activeIndex ? "bg-accent text-accent-foreground" : "text-popover-foreground hover:bg-accent/70 hover:text-accent-foreground",
+                  )}
+                >
+                  <span className="min-w-0 truncate">{organization.name}</span>
+                  {organization.id === currentOrganizationId && <span className="ml-auto pl-2 text-xs text-muted-foreground">Current</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
       {showCreate && (
         <Link

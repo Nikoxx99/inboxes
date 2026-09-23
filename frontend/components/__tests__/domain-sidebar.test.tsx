@@ -6,6 +6,7 @@ const mockPush = vi.fn();
 const mockOnCompose = vi.fn();
 const mockOnOpenSettings = vi.fn();
 const mockOnCloseSidebar = vi.fn();
+const mockMemberships = vi.hoisted(() => ({ current: undefined as unknown }));
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -59,7 +60,9 @@ vi.mock("@dnd-kit/utilities", () => ({
 // Mock @tanstack/react-query
 vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ setQueryData: vi.fn(), invalidateQueries: vi.fn() }),
-  useQuery: () => ({ data: undefined }),
+  useQuery: ({ queryKey }: { queryKey: string[] }) => ({
+    data: queryKey[0] === "organizations" ? mockMemberships.current : undefined,
+  }),
 }));
 
 // Mock query-keys
@@ -125,6 +128,7 @@ vi.mock("lucide-react", () => {
     Send: icon("send"),
     XCircle: icon("x-circle"),
     Clock: icon("clock"),
+    ChevronDown: icon("chevron-down"),
     FileText: icon("file-text"),
     Archive: icon("archive"),
     Star: icon("star"),
@@ -150,6 +154,7 @@ describe("DomainSidebar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockConnected = true;
+    mockMemberships.current = undefined;
   });
   afterEach(() => {
     cleanup();
@@ -241,6 +246,40 @@ describe("DomainSidebar", () => {
     });
     const settingsButtons = screen.getAllByText("Settings");
     expect(settingsButtons.length).toBeGreaterThan(0);
+  });
+
+  it("opens the workspace listbox and navigates options with the keyboard", async () => {
+    mockMemberships.current = {
+      organizations: [
+        { id: "org-1", name: "Nicolas's Org", role: "owner", current: true, onboarding_completed: true },
+        { id: "org-2", name: "Laniakea", role: "owner", current: false, onboarding_completed: true },
+      ],
+    };
+
+    await act(async () => {
+      render(
+        <DomainSidebar
+          onCompose={mockOnCompose}
+          onOpenSettings={mockOnOpenSettings}
+        />
+      );
+    });
+
+    const trigger = screen.getAllByRole("button", { name: "Workspace: Nicolas's Org" })[0];
+    expect(trigger).not.toHaveAttribute("aria-activedescendant");
+    fireEvent.click(trigger);
+
+    const listbox = screen.getAllByRole("listbox", { name: "Workspaces" })[0];
+    expect(listbox).toHaveFocus();
+    fireEvent.keyDown(listbox, { key: "ArrowDown" });
+    const activeOptionId = listbox.getAttribute("aria-activedescendant");
+    expect(activeOptionId).toBeTruthy();
+    expect(document.getElementById(activeOptionId!)?.textContent).toContain("Laniakea");
+    expect(mockPush).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(listbox, { key: "Escape" });
+    expect(screen.queryAllByRole("listbox", { name: "Workspaces" })).toHaveLength(0);
+    expect(trigger).toHaveFocus();
   });
 
   it("renders domain icons", async () => {
