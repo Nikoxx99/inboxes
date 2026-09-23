@@ -19,7 +19,10 @@ export const queryKeys = {
   },
   domains: {
     all: ["domains"] as const,
-    list: () => [...queryKeys.domains.all, "list"] as const,
+    list: (orgId?: string) =>
+      orgId
+        ? ([...queryKeys.domains.all, "list", orgId] as const)
+        : ([...queryKeys.domains.all, "list"] as const),
     unreadCounts: () => [...queryKeys.domains.all, "unreadCounts"] as const,
     // Prefixed under unreadCounts so every existing invalidation of the
     // unread counts also refreshes the per-label counts.

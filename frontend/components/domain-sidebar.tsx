@@ -250,7 +250,7 @@ export function DomainSidebar({ onCompose, onOpenSettings, onCloseSidebar }: Dom
   const router = useRouter();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { domains, activeDomain, setActiveDomainId, unreadCounts } =
+  const { orgId, domains, activeDomain, setActiveDomainId, unreadCounts } =
     useDomains();
   const { connected } = useNotifications();
   const { registrationEnabled } = useAppConfig();
@@ -312,7 +312,7 @@ export function DomainSidebar({ onCompose, onOpenSettings, onCloseSidebar }: Dom
       const reordered = arrayMove(domains, oldIndex, newIndex);
 
       // Optimistically update the cache
-      qc.setQueryData<Domain[]>(queryKeys.domains.list(), reordered);
+      qc.setQueryData<Domain[]>(queryKeys.domains.list(orgId), reordered);
 
       // Fire API call in background
       const order = reordered.map((d, i) => ({ id: d.id, order: i }));
@@ -321,7 +321,7 @@ export function DomainSidebar({ onCompose, onOpenSettings, onCloseSidebar }: Dom
         qc.invalidateQueries({ queryKey: queryKeys.domains.list() });
       });
     },
-    [domains, qc]
+    [domains, orgId, qc]
   );
 
   // Show disconnected banner only after 3s of disconnection

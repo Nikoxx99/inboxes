@@ -69,6 +69,15 @@ describe("queryKeys.domains", () => {
     expect(key).toEqual(["domains", "list"]);
   });
 
+  it("partitions the domain list by workspace", () => {
+    const firstWorkspace = queryKeys.domains.list("org-1");
+    const secondWorkspace = queryKeys.domains.list("org-2");
+
+    expect(firstWorkspace).toEqual(["domains", "list", "org-1"]);
+    expect(secondWorkspace).toEqual(["domains", "list", "org-2"]);
+    expect(firstWorkspace).not.toEqual(secondWorkspace);
+  });
+
   it("unreadCounts extends all", () => {
     const key = queryKeys.domains.unreadCounts();
     expect(key).toEqual(["domains", "unreadCounts"]);
