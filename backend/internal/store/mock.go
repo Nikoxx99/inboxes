@@ -23,27 +23,27 @@ type MockStore struct {
 	WithTxOptsFn func(ctx context.Context, opts pgx.TxOptions, fn func(Store) error) error
 
 	// ---- Auth ----
-	CountUsersFn             func(ctx context.Context) (int, error)
-	CreateOrgAndAdminFn      func(ctx context.Context, orgName, email, name, passwordHash string, emailVerified bool, isOwner bool) (string, string, error)
-	CreateOrgForAccountFn    func(ctx context.Context, orgName, email string) (string, string, error)
-	CreateWorkspaceForUserFn func(ctx context.Context, userID, orgName string) (string, string, error)
-	SetVerificationCodeFn    func(ctx context.Context, userID, code string, expires time.Time) error
-	GetLoginMembershipsFn    func(ctx context.Context, email string) ([]LoginMembership, error)
-	GetUserByEmailFn         func(ctx context.Context, email string) (id, orgID, name, role, status, passwordHash string, emailVerified bool, err error)
-	UpdateSignatureFn        func(ctx context.Context, userID, signatureHTML string) error
-	GetUndoSendSecondsFn     func(ctx context.Context, userID string) (int, error)
-	SetUndoSendSecondsFn     func(ctx context.Context, userID string, seconds int) error
-	GetOnboardingCompletedFn func(ctx context.Context, orgID string) (bool, error)
-	SetResetTokenFn          func(ctx context.Context, email, token string, expires time.Time) (int64, error)
-	ResetPasswordFn          func(ctx context.Context, passwordHash, token string) (string, error)
+	CountUsersFn               func(ctx context.Context) (int, error)
+	CreateOrgAndAdminFn        func(ctx context.Context, orgName, email, name, passwordHash string, emailVerified bool, isOwner bool) (string, string, error)
+	CreateOrgForAccountFn      func(ctx context.Context, orgName, email string) (string, string, error)
+	CreateWorkspaceForUserFn   func(ctx context.Context, userID, orgName string) (string, string, error)
+	SetVerificationCodeFn      func(ctx context.Context, userID, code string, expires time.Time) error
+	GetLoginMembershipsFn      func(ctx context.Context, email string) ([]LoginMembership, error)
+	GetUserByEmailFn           func(ctx context.Context, email string) (id, orgID, name, role, status, passwordHash string, emailVerified bool, err error)
+	UpdateSignatureFn          func(ctx context.Context, userID, signatureHTML string) error
+	GetUndoSendSecondsFn       func(ctx context.Context, userID string) (int, error)
+	SetUndoSendSecondsFn       func(ctx context.Context, userID string, seconds int) error
+	GetOnboardingCompletedFn   func(ctx context.Context, orgID string) (bool, error)
+	SetResetTokenFn            func(ctx context.Context, email, token string, expires time.Time) (int64, error)
+	ResetPasswordFn            func(ctx context.Context, passwordHash, token string) (string, error)
 	ResetPasswordMembershipsFn func(ctx context.Context, passwordHash, token string) ([]string, error)
-	ClaimInviteFn            func(ctx context.Context, passwordHash, name, token string) (string, string, string, string, error)
-	VerifyEmailFn            func(ctx context.Context, email, code string) (string, string, string, string, error)
-	ResendVerificationCodeFn func(ctx context.Context, email, code string, expires time.Time) (int64, error)
-	ValidateInviteTokenFn    func(ctx context.Context, token string) (string, string, string, bool, error)
-	ListAccountUserIDsFn     func(ctx context.Context, userID string) ([]string, error)
-	ListAccountMembershipsFn func(ctx context.Context, userID string) ([]map[string]any, error)
-	GetAccountMembershipFn  func(ctx context.Context, userID, orgID string) (LoginMembership, error)
+	ClaimInviteFn              func(ctx context.Context, passwordHash, name, token string) (string, string, string, string, error)
+	VerifyEmailFn              func(ctx context.Context, email, code string) (string, string, string, string, error)
+	ResendVerificationCodeFn   func(ctx context.Context, email, code string, expires time.Time) (int64, error)
+	ValidateInviteTokenFn      func(ctx context.Context, token string) (string, string, string, bool, error)
+	ListAccountUserIDsFn       func(ctx context.Context, userID string) ([]string, error)
+	ListAccountMembershipsFn   func(ctx context.Context, userID string) ([]map[string]any, error)
+	GetAccountMembershipFn     func(ctx context.Context, userID, orgID string) (LoginMembership, error)
 
 	// ---- Threads ----
 	GetUserAliasAddressesFn    func(ctx context.Context, userID string) ([]string, error)

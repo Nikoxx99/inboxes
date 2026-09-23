@@ -382,7 +382,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"requires_organization_selection": true,
-			"organizations": organizations,
+			"organizations":                   organizations,
 		})
 		return
 	}

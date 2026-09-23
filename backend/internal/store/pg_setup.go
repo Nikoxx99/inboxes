@@ -11,7 +11,9 @@ func (s *PgStore) SetupCountUsers(ctx context.Context) (int, error) {
 	return count, err
 }
 
-func (s *PgStore) CreateAdminSetup(ctx context.Context, orgName, email, name, passwordHash, systemResendKey, systemFromAddress, systemFromName string, encSvc interface{ Encrypt(string) (string, string, string, error) }) (string, string, error) {
+func (s *PgStore) CreateAdminSetup(ctx context.Context, orgName, email, name, passwordHash, systemResendKey, systemFromAddress, systemFromName string, encSvc interface {
+	Encrypt(string) (string, string, string, error)
+}) (string, string, error) {
 	// Create org
 	var orgID string
 	if err := s.q.QueryRow(ctx,

@@ -321,8 +321,10 @@ func (h *UserHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	// for every organization membership before re-issuing this session.
 	pwBlacklist := service.NewTokenBlacklist(h.RDB)
 	accountUserIDs, idsErr := h.Store.ListAccountUserIDs(r.Context(), claims.UserID)
-	if idsErr != nil {
-		slog.Error("users: account membership lookup failed during password change", "user_id", claims.UserID, "error", idsErr)
+	if idsErr != nil || len(accountUserIDs) == 0 {
+		if idsErr != nil {
+			slog.Error("users: account membership lookup failed during password change", "user_id", claims.UserID, "error", idsErr)
+		}
 		accountUserIDs = []string{claims.UserID}
 	}
 	var revErr error

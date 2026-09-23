@@ -2,6 +2,7 @@
 -- Separate a human's sign-in identity from their organization-scoped user
 -- records. Existing user IDs remain stable because they are referenced by
 -- mailbox data, aliases, events, and agent tokens.
+-- +goose StatementBegin
 DO $$
 BEGIN
   IF EXISTS (
@@ -11,6 +12,7 @@ BEGIN
   END IF;
 END;
 $$;
+-- +goose StatementEnd
 
 CREATE TABLE accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -52,8 +54,10 @@ ALTER TABLE users DROP CONSTRAINT users_email_key;
 CREATE UNIQUE INDEX idx_users_org_email ON users(org_id, lower(email));
 
 -- +goose Down
+-- +goose StatementBegin
 DO $$
 BEGIN
   RAISE EXCEPTION 'migration 032 cannot be rolled back safely after account/workspace creation';
 END;
 $$;
+-- +goose StatementEnd

@@ -301,7 +301,7 @@ func (s *PgStore) ValidateInviteToken(ctx context.Context, token string) (string
 	var email, name, status string
 	var hasAccount bool
 	err := s.q.QueryRow(ctx,
-		 `SELECT u.email, u.name, u.status::text, (a.password_hash IS NOT NULL)
+		`SELECT u.email, u.name, u.status::text, (a.password_hash IS NOT NULL)
 		 FROM users u LEFT JOIN accounts a ON a.id = u.account_id
 		 WHERE u.invite_token IN ($1, $2) AND u.invite_expires_at > now()`,
 		hashSecretToken(token), token,

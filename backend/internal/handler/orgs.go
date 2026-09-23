@@ -121,20 +121,20 @@ func (h *OrgHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := map[string]interface{}{
-		"id":                   claims.OrgID,
-		"name":                 settings["name"],
-		"onboarding_completed": settings["onboarding_completed"],
-		"has_api_key":          settings["has_api_key"],
-		"api_key_status":       settings["api_key_status"],
-		"api_key_checked_at":   settings["api_key_checked_at"],
-		"has_webhook":          settings["has_webhook"],
-		"last_webhook_at":      settings["last_webhook_at"],
-		"billing_enabled":      h.StripeKey != "",
-		"resend_rps":           settings["resend_rps"],
-		"forwarding_enabled":   settings["forwarding_enabled"],
-		"auto_reply_enabled":   settings["auto_reply_enabled"],
+		"id":                          claims.OrgID,
+		"name":                        settings["name"],
+		"onboarding_completed":        settings["onboarding_completed"],
+		"has_api_key":                 settings["has_api_key"],
+		"api_key_status":              settings["api_key_status"],
+		"api_key_checked_at":          settings["api_key_checked_at"],
+		"has_webhook":                 settings["has_webhook"],
+		"last_webhook_at":             settings["last_webhook_at"],
+		"billing_enabled":             h.StripeKey != "",
+		"resend_rps":                  settings["resend_rps"],
+		"forwarding_enabled":          settings["forwarding_enabled"],
+		"auto_reply_enabled":          settings["auto_reply_enabled"],
 		"external_forwarding_allowed": settings["external_forwarding_allowed"],
-		"agent_send_enabled":   settings["agent_send_enabled"],
+		"agent_send_enabled":          settings["agent_send_enabled"],
 	}
 	if h.StripeKey == "" {
 		resp["auto_poll_enabled"] = settings["auto_poll_enabled"]
@@ -147,15 +147,15 @@ func (h *OrgHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	claims := middleware.GetCurrentUser(r.Context())
 
 	var req struct {
-		Name             string `json:"name"`
-		APIKey           string `json:"api_key"`
-		ResendRPS        *int   `json:"resend_rps"`
-		AutoPollEnabled  *bool  `json:"auto_poll_enabled"`
-		AutoPollInterval *int   `json:"auto_poll_interval"`
-		ForwardingEnabled         *bool `json:"forwarding_enabled"`
-		AutoReplyEnabled          *bool `json:"auto_reply_enabled"`
-		ExternalForwardingAllowed *bool `json:"external_forwarding_allowed"`
-		AgentSendEnabled          *bool `json:"agent_send_enabled"`
+		Name                      string `json:"name"`
+		APIKey                    string `json:"api_key"`
+		ResendRPS                 *int   `json:"resend_rps"`
+		AutoPollEnabled           *bool  `json:"auto_poll_enabled"`
+		AutoPollInterval          *int   `json:"auto_poll_interval"`
+		ForwardingEnabled         *bool  `json:"forwarding_enabled"`
+		AutoReplyEnabled          *bool  `json:"auto_reply_enabled"`
+		ExternalForwardingAllowed *bool  `json:"external_forwarding_allowed"`
+		AgentSendEnabled          *bool  `json:"agent_send_enabled"`
 	}
 	if err := readJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request")

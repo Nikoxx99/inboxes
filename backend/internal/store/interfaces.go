@@ -88,8 +88,8 @@ type LoginMembership struct {
 	Role                string
 	Status              string
 	PasswordHash        string
-	EmailVerified        bool
-	OrgName              string
+	EmailVerified       bool
+	OrgName             string
 	OnboardingCompleted bool
 }
 
@@ -314,7 +314,9 @@ type OnboardingStore interface {
 
 type SetupStore interface {
 	SetupCountUsers(ctx context.Context) (int, error)
-	CreateAdminSetup(ctx context.Context, orgName, email, name, passwordHash, systemResendKey, systemFromAddress, systemFromName string, encSvc interface{ Encrypt(string) (string, string, string, error) }) (orgID, userID string, err error)
+	CreateAdminSetup(ctx context.Context, orgName, email, name, passwordHash, systemResendKey, systemFromAddress, systemFromName string, encSvc interface {
+		Encrypt(string) (string, string, string, error)
+	}) (orgID, userID string, err error)
 	UpsertSystemSetting(ctx context.Context, key, value string) error
 	GetUserEmail(ctx context.Context, userID string) (string, error)
 }
