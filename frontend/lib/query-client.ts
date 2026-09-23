@@ -25,6 +25,12 @@ if (typeof window !== "undefined") {
     const raw = localStorage.getItem(CACHE_KEY);
     if (raw) {
       hydrate(queryClient, JSON.parse(raw));
+      // Older builds cached every workspace's domains under this shared key.
+      // Drop it so only the new org-scoped key can be rendered.
+      queryClient.removeQueries({
+        queryKey: ["domains", "list"],
+        exact: true,
+      });
     }
   } catch {
     localStorage.removeItem(CACHE_KEY);
