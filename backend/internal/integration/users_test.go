@@ -182,6 +182,9 @@ func TestGetMe(t *testing.T) {
 	if me["id"] != userID {
 		t.Errorf("expected id %s, got %v", userID, me["id"])
 	}
+	if me["org_id"] != orgID {
+		t.Errorf("expected org_id %s, got %v", orgID, me["org_id"])
+	}
 	if me["email"] != email {
 		t.Errorf("expected email %s, got %v", email, me["email"])
 	}
