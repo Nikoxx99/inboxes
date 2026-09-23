@@ -157,6 +157,13 @@ func TestAuth_AddWorkspaceForExistingAccount(t *testing.T) {
 	if membershipCount != 2 {
 		t.Fatalf("account has %d workspace memberships, want 2", membershipCount)
 	}
+	workspaces, err := testStore.ListAccountMemberships(context.Background(), signupResp.User.ID)
+	if err != nil {
+		t.Fatalf("list account workspaces: %v", err)
+	}
+	if len(workspaces) != 2 || workspaces[0]["id"] != firstOrgID || workspaces[1]["id"] != secondOrgID {
+		t.Fatalf("workspace selector order = %v, want original workspace %s before new workspace %s", workspaces, firstOrgID, secondOrgID)
+	}
 
 	firstSettings, err := testStore.GetOrgSettings(context.Background(), firstOrgID)
 	if err != nil {

@@ -29,10 +29,11 @@ invitation.
 
 ## Switch workspaces
 
-The sidebar selector lists active memberships for the signed-in account. Login
-also asks the user to choose a workspace when the account has more than one
-active membership. Switching issues a new tenant-scoped session, then reloads
-the app so cached data and the WebSocket reconnect under the selected tenant.
+The sidebar selector lists active memberships for the signed-in account, oldest
+workspace first. Login also asks the user to choose a workspace when the account
+has more than one active membership. Switching issues a new tenant-scoped
+session, then reloads the app so cached data and the WebSocket reconnect under
+the selected tenant.
 
 The backend validates the account-to-membership relationship before issuing a
 session and validates the `(user_id, org_id)` pair on protected requests. A

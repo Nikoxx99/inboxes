@@ -333,11 +333,11 @@ func (s *PgStore) ListAccountMemberships(ctx context.Context, userID string) ([]
 	rows, err := s.q.Query(ctx,
 		`SELECT org.id, org.name, member.role::text AS role,
 		        (member.id = current.id) AS current, org.onboarding_completed
-		 FROM users current
-	 JOIN users member ON member.account_id = current.account_id
-	 JOIN orgs org ON org.id = member.org_id
+		FROM users current
+		JOIN users member ON member.account_id = current.account_id
+		JOIN orgs org ON org.id = member.org_id
 		 WHERE current.id = $1 AND member.status = 'active' AND org.deleted_at IS NULL
-		 ORDER BY org.name, org.id`,
+		 ORDER BY member.created_at, member.id`,
 		userID,
 	)
 	if err != nil {
