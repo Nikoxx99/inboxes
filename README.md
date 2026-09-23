@@ -88,6 +88,7 @@ See [Deployment Guide](docs/deployment.md) for Coolify setup, reverse proxy opti
 | `API_PORT` | No | `8080` | Backend port |
 | `EVENT_RETENTION_DAYS` | No | `90` | How long to keep events for WS catch-up |
 | `STRIPE_KEY` | No | - | Enables commercial mode (billing + email verification) |
+| `WORKSPACE_REGISTRATION_ENABLED` | No | `true` | Enables public account and workspace registration in self-hosted mode; set `false` to close it |
 | `STRIPE_WEBHOOK_SECRET` | If Stripe | - | Required when `STRIPE_KEY` is set |
 | `STRIPE_PRICE_ID` | If Stripe | - | Required when `STRIPE_KEY` is set |
 
@@ -101,7 +102,7 @@ See [Deployment Guide](docs/deployment.md) for Coolify setup, reverse proxy opti
 
 ## Self-Hosted vs Commercial
 
-Inboxes runs in self-hosted mode by default. Setting `STRIPE_KEY` enables commercial mode with billing, email verification, and plan enforcement. See [Self-Hosted Guide](docs/self-hosted.md) for details.
+Inboxes runs in self-hosted mode by default, with account and workspace registration open. Setting `STRIPE_KEY` enables commercial mode with billing, email verification, and plan enforcement. Set `WORKSPACE_REGISTRATION_ENABLED=false` to close registration without enabling billing. See [Self-Hosted Guide](docs/self-hosted.md) for details.
 
 ## Documentation
 

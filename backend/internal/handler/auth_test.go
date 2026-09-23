@@ -698,6 +698,38 @@ func TestSignup_Success(t *testing.T) {
 	}
 }
 
+func TestSignup_PublicRegistrationDoesNotGrantOwner(t *testing.T) {
+	t.Parallel()
+	var emailVerified, isOwner bool
+	h := &AuthHandler{
+		Store: &store.MockStore{
+			CountUsersFn: func(ctx context.Context) (int, error) {
+				return 2, nil
+			},
+			CreateOrgAndAdminFn: func(ctx context.Context, orgName, email, name, passwordHash string, verified bool, owner bool) (string, string, error) {
+				emailVerified, isOwner = verified, owner
+				return "org2", "user2", nil
+			},
+		},
+		Secret:                       "test-secret-key-for-jwt-signing",
+		WorkspaceRegistrationEnabled: true,
+	}
+	body := `{"email":"new@example.com","password":"Password1","org_name":"New Workspace"}`
+	req := httptest.NewRequest("POST", "/auth/signup", strings.NewReader(body))
+	w := httptest.NewRecorder()
+	h.Signup(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Fatalf("Signup: got status %d, want %d; body: %s", w.Code, http.StatusCreated, w.Body.String())
+	}
+	if !emailVerified {
+		t.Error("self-hosted signup should mark new accounts email-verified")
+	}
+	if isOwner {
+		t.Error("a later public signup must not receive instance-owner access")
+	}
+}
+
 func TestSignup_DuplicateEmail(t *testing.T) {
 	t.Parallel()
 	h := &AuthHandler{

@@ -83,9 +83,9 @@ Rate limited: 30 requests/minute per IP.
 
 **Response (200):**
 ```json
-{ "api_url": "https://...", "ws_url": "wss://...", "commercial": false }
+{ "api_url": "https://...", "ws_url": "wss://...", "commercial": false, "registration_enabled": true }
 ```
-`commercial` is `true` when `STRIPE_KEY` is configured. Uses `Cache-Control: no-store`.
+`commercial` is `true` when `STRIPE_KEY` is configured. `registration_enabled` is `true` when registration is open through commercial mode or `WORKSPACE_REGISTRATION_ENABLED`. Uses `Cache-Control: no-store`.
 
 ### Setup (Self-Hosted Only)
 
@@ -99,7 +99,7 @@ Available only when `STRIPE_KEY` is unset.
 
 **GET /api/setup/status** response:
 ```json
-{ "needs_setup": true, "commercial": false, "system_email_configured": false }
+{ "needs_setup": true, "commercial": false, "registration_enabled": true, "system_email_configured": false }
 ```
 
 **POST /api/setup** body:
@@ -141,7 +141,7 @@ Response:
 ```json
 { "org_name": "My Org", "email": "user@example.com", "name": "User Name", "password": "..." }
 ```
-In commercial mode, a new email returns `{"requires_verification": true, "email": "..."}` (201) and sends a 6-digit verification code. If the email already belongs to an account, the current password creates an additional workspace, signs the user into it, and returns a user object. Signup returns the same verification response for an existing email when the password does not match, and emails account-specific next steps to avoid exposing account existence. Self-hosted signup remains limited to the first account.
+In commercial mode, a new email returns `{"requires_verification": true, "email": "..."}` (201) and sends a 6-digit verification code. If the email already belongs to an account, the current password creates an additional workspace, signs the user into it, and returns a user object. Signup returns the same verification response for an existing email when the password does not match, and emails account-specific next steps to avoid exposing account existence. In self-hosted mode, public registration is open by default in this fork; set `WORKSPACE_REGISTRATION_ENABLED=false` to close it. Existing account emails can create additional workspaces with the current password.
 
 **POST /api/auth/login** body:
 ```json
@@ -255,7 +255,7 @@ Accessible even without an active plan.
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/orgs/memberships` | List the current account's active workspaces |
-| `POST` | `/api/orgs` | Create a workspace for the signed-in account (commercial mode) |
+| `POST` | `/api/orgs` | Create a workspace for the signed-in account (registration-enabled modes) |
 | `POST` | `/api/orgs/switch` | Switch the session to one of those workspaces |
 
 **GET /api/orgs/memberships** response:

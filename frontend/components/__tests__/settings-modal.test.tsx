@@ -83,7 +83,7 @@ vi.mock("@/components/tiptap-editor", () => ({
 
 // Mock contexts
 vi.mock("@/contexts/app-config-context", () => ({
-  useAppConfig: () => ({ commercial: false, apiUrl: "", wsUrl: "" }),
+  useAppConfig: () => ({ commercial: false, registrationEnabled: false, apiUrl: "", wsUrl: "" }),
 }));
 
 vi.mock("@/contexts/domain-context", () => ({

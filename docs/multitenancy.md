@@ -17,7 +17,9 @@ its Resend API key is not copied from any other workspace. Connect a key during
 onboarding or in organization settings.
 
 New email addresses still need email verification in hosted mode. Self-hosted
-instances retain their one-time setup and closed-signup behavior.
+instances allow public signup and workspace creation by default, without
+billing or email verification. Set `WORKSPACE_REGISTRATION_ENABLED=false` to
+close public registration.
 
 ## Invite a member
 

@@ -36,6 +36,9 @@ func TestSetupStatus_NeedsSetup(t *testing.T) {
 	if resp["commercial"] != true {
 		t.Errorf("SetupStatus(commercial): got commercial=%v, want true", resp["commercial"])
 	}
+	if resp["registration_enabled"] != true {
+		t.Errorf("SetupStatus(commercial): got registration_enabled=%v, want true", resp["registration_enabled"])
+	}
 }
 
 func TestSetupStatus_AlreadySetup(t *testing.T) {

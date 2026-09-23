@@ -66,7 +66,7 @@ vi.mock("@/contexts/domain-context", () => ({
 }));
 
 vi.mock("@/contexts/app-config-context", () => ({
-  useAppConfig: () => ({ commercial: false, apiUrl: "", wsUrl: "" }),
+  useAppConfig: () => ({ commercial: false, registrationEnabled: false, apiUrl: "", wsUrl: "" }),
 }));
 
 vi.mock("@/hooks/use-sync-job", () => ({

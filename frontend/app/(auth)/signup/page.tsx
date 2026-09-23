@@ -71,14 +71,14 @@ export default function SignupPage() {
       }
 
       try {
-        const status = await api.get<{ needs_setup: boolean; commercial: boolean }>(
+        const status = await api.get<{ needs_setup: boolean; registration_enabled?: boolean; commercial: boolean }>(
           "/api/setup/status"
         );
         if (status.needs_setup) {
           router.replace("/setup");
           return;
         }
-        if (active && !status.commercial) setBlocked(true);
+        if (active && !(status.registration_enabled ?? status.commercial)) setBlocked(true);
       } catch {
         // Keep the form available if the status endpoint cannot be reached.
       } finally {

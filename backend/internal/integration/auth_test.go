@@ -111,7 +111,7 @@ func TestAuth_AddWorkspaceForExistingAccount(t *testing.T) {
 	truncateAll(context.Background())
 
 	h := newAuthHandler()
-	h.StripeKey = "sk_test_multitenant"
+	h.WorkspaceRegistrationEnabled = true
 
 	firstOrgID, _ := seedOrg(t, "Existing Workspace", "shared@example.com", "Password1")
 	t.Cleanup(func() { cleanupOrg(t, firstOrgID) })

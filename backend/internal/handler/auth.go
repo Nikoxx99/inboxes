@@ -20,12 +20,13 @@ import (
 )
 
 type AuthHandler struct {
-	Store     store.Store
-	RDB       *redis.Client
-	Secret    string
-	AppURL    string
-	ResendSvc *service.ResendService
-	StripeKey string
+	Store                        store.Store
+	RDB                          *redis.Client
+	Secret                       string
+	AppURL                       string
+	ResendSvc                    *service.ResendService
+	StripeKey                    string
+	WorkspaceRegistrationEnabled bool
 }
 
 // dummyHash is used for constant-time comparison when user is not found,
@@ -67,10 +68,21 @@ type claimRequest struct {
 func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Solo mode: block signups when at least one user exists
-	if h.StripeKey == "" {
+	commercial := h.StripeKey != ""
+	registrationEnabled := commercial || h.WorkspaceRegistrationEnabled
+	selfHostedUserCount := 0
+	// Self-hosted instances can close public registration. Keep the single-user
+	// bootstrap behavior when disabled, and only grant instance-owner access to
+	// the first self-hosted account.
+	if !commercial {
 		count, err := h.Store.CountUsers(ctx)
-		if err == nil && count > 0 {
+		if err != nil {
+			slog.Error("auth: failed to count users during signup", "error", err)
+			writeError(w, http.StatusInternalServerError, "failed to check registration status")
+			return
+		}
+		selfHostedUserCount = count
+		if !registrationEnabled && count > 0 {
 			writeError(w, http.StatusForbidden, "registration is closed")
 			return
 		}
@@ -106,7 +118,7 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	// A verified account can register another workspace with its existing
 	// password. This creates a new organization-scoped user record and never
 	// copies organization integrations such as the Resend API key.
-	if h.StripeKey != "" {
+	if registrationEnabled {
 		existing, lookupErr := h.Store.GetLoginMemberships(ctx, req.Email)
 		if lookupErr != nil {
 			slog.Error("auth: account lookup failed during workspace signup", "error", lookupErr)
@@ -200,12 +212,12 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 	// In hosted mode, new users need email verification
 	emailVerified := true
-	if h.StripeKey != "" {
+	if commercial {
 		emailVerified = false
 	}
 
 	// In self-hosted mode, the first user (count == 0) becomes the instance owner
-	isSelfHostedOwner := h.StripeKey == ""
+	isSelfHostedOwner := !commercial && selfHostedUserCount == 0
 
 	var orgID, userID string
 	var verificationCode string
@@ -217,7 +229,7 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// If hosted, generate verification code within the same transaction
-		if h.StripeKey != "" {
+		if commercial {
 			verificationCode = generateVerificationCode()
 			expires := time.Now().Add(15 * time.Minute)
 			if err := tx.SetVerificationCode(ctx, userID, verificationCode, expires); err != nil {
@@ -229,7 +241,7 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	if txErr != nil {
 		if strings.Contains(txErr.Error(), "email already registered") {
 			// Another signup may have created the account after the lookup above.
-			if h.StripeKey != "" {
+			if registrationEnabled {
 				h.respondExistingAccountSignup(ctx, w, req.Email)
 				return
 			}
@@ -244,7 +256,7 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	slog.Info("auth: signup", "email", req.Email, "org_id", orgID)
 
 	// If hosted, send verification email and return early
-	if h.StripeKey != "" {
+	if commercial {
 		from := h.ResendSvc.GetSystemFrom(ctx)
 		if from == "" {
 			from = "noreply@inboxes.net"

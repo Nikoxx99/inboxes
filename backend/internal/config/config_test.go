@@ -142,6 +142,7 @@ func TestLoad_InvalidRedisURL(t *testing.T) {
 
 func TestLoad_ValidConfig(t *testing.T) {
 	setValidEnv(t)
+	t.Setenv("WORKSPACE_REGISTRATION_ENABLED", "")
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load: %v", err)
@@ -151,6 +152,21 @@ func TestLoad_ValidConfig(t *testing.T) {
 	}
 	if cfg.EncryptionKey != testEncryptionKey {
 		t.Errorf("EncryptionKey: got %q, want %q", cfg.EncryptionKey, testEncryptionKey)
+	}
+	if !cfg.WorkspaceRegistrationEnabled {
+		t.Error("WorkspaceRegistrationEnabled: got false, want true by default")
+	}
+}
+
+func TestLoad_DisableWorkspaceRegistration(t *testing.T) {
+	setValidEnv(t)
+	t.Setenv("WORKSPACE_REGISTRATION_ENABLED", "false")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.WorkspaceRegistrationEnabled {
+		t.Error("WorkspaceRegistrationEnabled: got true, want false when explicitly disabled")
 	}
 }
 
