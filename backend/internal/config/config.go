@@ -12,19 +12,22 @@ import (
 )
 
 type Config struct {
-	DatabaseURL       string
-	RedisURL          string
-	EncryptionKey     string
-	ResendSystemKey   string
-	SessionSecret     string
-	AppURL            string
-	PublicURL         string
-	APIPort           string
+	DatabaseURL     string
+	RedisURL        string
+	EncryptionKey   string
+	ResendSystemKey string
+	SessionSecret   string
+	AppURL          string
+	PublicURL       string
+	APIPort         string
 
 	// Stripe (optional — when empty, billing is disabled for self-hosted)
 	StripeKey           string
 	StripeWebhookSecret string
 	StripePriceID       string
+
+	// Workspace registration (open by default for self-hosted instances)
+	WorkspaceRegistrationEnabled bool
 
 	// System email sender (required in commercial mode)
 	SystemFromAddress string
@@ -32,14 +35,14 @@ type Config struct {
 	EventRetentionDays int
 
 	// Worker intervals (configurable via env vars, Go duration strings)
-	DomainHeartbeatInterval  time.Duration
-	TrashCollectorInterval   time.Duration
-	EventPrunerInterval      time.Duration
-	StatusRecoveryInterval   time.Duration
+	DomainHeartbeatInterval   time.Duration
+	TrashCollectorInterval    time.Duration
+	EventPrunerInterval       time.Duration
+	StatusRecoveryInterval    time.Duration
 	StripeEventPrunerInterval time.Duration
-	GracePeriodInterval      time.Duration
-	SendReconcileInterval    time.Duration
-	SchedulerInterval        time.Duration
+	GracePeriodInterval       time.Duration
+	SendReconcileInterval     time.Duration
+	SchedulerInterval         time.Duration
 
 	// Trash collector toggle
 	TrashCollectorEnabled bool
@@ -63,9 +66,10 @@ func Load() (*Config, error) {
 		PublicURL:       getEnv("PUBLIC_URL", "http://localhost:8080"),
 		APIPort:         getEnv("API_PORT", "8080"),
 
-		StripeKey:           os.Getenv("STRIPE_KEY"),
-		StripeWebhookSecret: os.Getenv("STRIPE_WEBHOOK_SECRET"),
-		StripePriceID:       os.Getenv("STRIPE_PRICE_ID"),
+		StripeKey:                    os.Getenv("STRIPE_KEY"),
+		StripeWebhookSecret:          os.Getenv("STRIPE_WEBHOOK_SECRET"),
+		StripePriceID:                os.Getenv("STRIPE_PRICE_ID"),
+		WorkspaceRegistrationEnabled: getEnvBool("WORKSPACE_REGISTRATION_ENABLED", true),
 
 		SystemFromAddress: os.Getenv("SYSTEM_FROM_ADDRESS"),
 
@@ -192,6 +196,14 @@ func GetEnvInt(key string, fallback int) int {
 		}
 	}
 	return fallback
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	return strings.EqualFold(value, "true")
 }
 
 func getEnvDuration(key string, fallback time.Duration) time.Duration {

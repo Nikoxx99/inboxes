@@ -253,7 +253,7 @@ export function DomainSidebar({ onCompose, onOpenSettings, onCloseSidebar }: Dom
   const { domains, activeDomain, setActiveDomainId, unreadCounts } =
     useDomains();
   const { connected } = useNotifications();
-  const { commercial } = useAppConfig();
+  const { registrationEnabled } = useAppConfig();
   const qc = useQueryClient();
 
   const { data: memberships } = useQuery({
@@ -405,7 +405,7 @@ export function DomainSidebar({ onCompose, onOpenSettings, onCloseSidebar }: Dom
           organizations={organizations}
           currentOrganizationId={currentOrganizationId}
           switching={switchingOrganization}
-          showCreate={commercial}
+          showCreate={registrationEnabled}
           onChange={handleOrganizationChange}
         />
 
@@ -566,7 +566,7 @@ export function DomainSidebar({ onCompose, onOpenSettings, onCloseSidebar }: Dom
             organizations={organizations}
             currentOrganizationId={currentOrganizationId}
             switching={switchingOrganization}
-            showCreate={commercial}
+            showCreate={registrationEnabled}
             onChange={handleOrganizationChange}
           />
 

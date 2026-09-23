@@ -260,6 +260,12 @@ All three are required when `STRIPE_KEY` is set. When `STRIPE_KEY` is empty, bil
 | `RESEND_SYSTEM_API_KEY` | Required when `STRIPE_KEY` is set (used for system emails) |
 | `SYSTEM_FROM_ADDRESS` | Required when `STRIPE_KEY` is set (sender address for system emails) |
 
+### Self-Hosted Registration
+
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `WORKSPACE_REGISTRATION_ENABLED` | `true` | Public account and workspace registration; set to `false` to close it |
+
 ### Worker Intervals
 
 All accept Go duration strings (e.g., `5m`, `1h`, `30s`). Values must be positive.

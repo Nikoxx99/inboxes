@@ -21,14 +21,15 @@ import (
 )
 
 type Config struct {
-	Secret              string
-	AppURL              string
-	PublicURL           string
-	StripeKey           string
-	StripePriceID       string
-	StripeWebhookSecret string
-	EventCatchupMaxAge  time.Duration
-	AppCtx              context.Context
+	Secret                       string
+	AppURL                       string
+	PublicURL                    string
+	StripeKey                    string
+	StripePriceID                string
+	StripeWebhookSecret          string
+	WorkspaceRegistrationEnabled bool
+	EventCatchupMaxAge           time.Duration
+	AppCtx                       context.Context
 	// MCP is the agent endpoint. When set, the router mounts /mcp plus the
 	// OAuth authorization-server routes, and hands the finished router back
 	// to the MCP server for in-process tool calls.
@@ -39,6 +40,7 @@ func New(db *pgxpool.Pool, rdb *redis.Client, encSvc *service.EncryptionService,
 	secret := cfg.Secret
 	appURL := cfg.AppURL
 	stripeKey := cfg.StripeKey
+	registrationEnabled := stripeKey != "" || cfg.WorkspaceRegistrationEnabled
 	r := chi.NewRouter()
 
 	r.Use(chiMiddleware.RequestID)
@@ -54,8 +56,8 @@ func New(db *pgxpool.Pool, rdb *redis.Client, encSvc *service.EncryptionService,
 	r.Use(chiMiddleware.Compress(5))
 
 	st := store.NewPgStore(db)
-	auth := &handler.AuthHandler{Store: st, RDB: rdb, Secret: secret, AppURL: appURL, ResendSvc: resendSvc, StripeKey: stripeKey}
-	setup := &handler.SetupHandler{Store: st, EncSvc: encSvc, ResendSvc: resendSvc, Secret: secret, AppURL: appURL, StripeKey: stripeKey}
+	auth := &handler.AuthHandler{Store: st, RDB: rdb, Secret: secret, AppURL: appURL, ResendSvc: resendSvc, StripeKey: stripeKey, WorkspaceRegistrationEnabled: cfg.WorkspaceRegistrationEnabled}
+	setup := &handler.SetupHandler{Store: st, EncSvc: encSvc, ResendSvc: resendSvc, Secret: secret, AppURL: appURL, StripeKey: stripeKey, WorkspaceRegistrationEnabled: cfg.WorkspaceRegistrationEnabled}
 	threads := &handler.ThreadHandler{Store: st, Bus: bus}
 	emails := &handler.EmailHandler{Store: st, ResendSvc: resendSvc, Bus: bus, RDB: rdb}
 	webhooks := &handler.WebhookHandler{Store: st, Bus: bus, ResendSvc: resendSvc, RDB: rdb, EncSvc: encSvc, AppCtx: cfg.AppCtx}
@@ -66,7 +68,7 @@ func New(db *pgxpool.Pool, rdb *redis.Client, encSvc *service.EncryptionService,
 	contacts := &handler.ContactHandler{Store: st}
 	attachments := &handler.AttachmentHandler{Store: st}
 	drafts := &handler.DraftHandler{Store: st, ResendSvc: resendSvc, Bus: bus, RDB: rdb}
-	orgs := &handler.OrgHandler{Store: st, RDB: rdb, Secret: secret, EncSvc: encSvc, ResendSvc: resendSvc, Bus: bus, StripeKey: stripeKey, LimiterMap: limiterMap, AppURL: appURL}
+	orgs := &handler.OrgHandler{Store: st, RDB: rdb, Secret: secret, EncSvc: encSvc, ResendSvc: resendSvc, Bus: bus, StripeKey: stripeKey, WorkspaceRegistrationEnabled: cfg.WorkspaceRegistrationEnabled, LimiterMap: limiterMap, AppURL: appURL}
 	labels := &handler.LabelHandler{Store: st}
 	syncH := &handler.SyncHandler{Store: st, RDB: rdb}
 	events := &handler.EventHandler{Store: st, CatchupMaxAge: cfg.EventCatchupMaxAge}
@@ -126,9 +128,10 @@ func New(db *pgxpool.Pool, rdb *redis.Client, encSvc *service.EncryptionService,
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "no-store")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"api_url":    appURL,
-			"ws_url":     wsURL,
-			"commercial": stripeKey != "",
+			"api_url":              appURL,
+			"ws_url":               wsURL,
+			"commercial":           stripeKey != "",
+			"registration_enabled": registrationEnabled,
 		})
 	})
 

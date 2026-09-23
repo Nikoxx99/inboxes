@@ -15,15 +15,16 @@ import (
 )
 
 type OrgHandler struct {
-	Store      store.Store
-	RDB        *redis.Client
-	Secret     string
-	AppURL     string
-	EncSvc     *service.EncryptionService
-	ResendSvc  *service.ResendService
-	Bus        *event.Bus
-	StripeKey  string
-	LimiterMap *queue.OrgLimiterMap
+	Store                        store.Store
+	RDB                          *redis.Client
+	Secret                       string
+	AppURL                       string
+	EncSvc                       *service.EncryptionService
+	ResendSvc                    *service.ResendService
+	Bus                          *event.Bus
+	StripeKey                    string
+	WorkspaceRegistrationEnabled bool
+	LimiterMap                   *queue.OrgLimiterMap
 }
 
 func (h *OrgHandler) ListMemberships(w http.ResponseWriter, r *http.Request) {
@@ -37,8 +38,8 @@ func (h *OrgHandler) ListMemberships(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *OrgHandler) Create(w http.ResponseWriter, r *http.Request) {
-	if h.StripeKey == "" {
-		writeError(w, http.StatusForbidden, "additional workspaces are only available in commercial mode")
+	if h.StripeKey == "" && !h.WorkspaceRegistrationEnabled {
+		writeError(w, http.StatusForbidden, "additional workspaces are not enabled")
 		return
 	}
 	claims := middleware.GetCurrentUser(r.Context())

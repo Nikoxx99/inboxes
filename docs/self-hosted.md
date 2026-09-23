@@ -5,9 +5,9 @@ Inboxes runs in one of two modes, determined by a single environment variable at
 ## How Mode Is Determined
 
 - **`STRIPE_KEY` is set and non-empty** -- Commercial mode (billing, email verification, open signup)
-- **`STRIPE_KEY` is unset or empty** -- Self-hosted mode (no billing, no email verification, invite-only after initial setup)
+- **`STRIPE_KEY` is unset or empty** -- Self-hosted mode (no billing or email verification; signup is open after initial setup by default)
 
-There is no config file or feature flag. The presence of `STRIPE_KEY` is checked once at startup and passed through to route registration, handler constructors, and middleware.
+`WORKSPACE_REGISTRATION_ENABLED` controls public account and workspace registration in self-hosted mode. It defaults to `true` in this fork; set it to `false` to close registration. This setting does not enable billing or email verification and is read at startup.
 
 ---
 
@@ -36,7 +36,7 @@ After setup, a JWT cookie is set automatically so the admin proceeds directly to
 
 ### First-User Signup Fallback
 
-The `POST /api/auth/signup` endpoint serves as an alternative to the setup wizard. In self-hosted mode, signup is allowed only when zero users exist in the database. The first user created through signup gets `email_verified = true` (skipping verification) and is assigned the `admin` role. Once any user exists, the signup endpoint returns `403 "registration is closed"`.
+The `POST /api/auth/signup` endpoint serves as an alternative to the setup wizard. In this fork, self-hosted signup is open after initial setup by default. The first user created through signup gets `email_verified = true` (skipping verification) and is assigned the `admin` role. New self-hosted accounts remain email-verified without a verification step, but only the initial account receives instance-owner access. Set `WORKSPACE_REGISTRATION_ENABLED=false` to restore invite-only behavior after setup.
 
 This means there are two paths to bootstrap a self-hosted instance:
 
@@ -45,7 +45,7 @@ This means there are two paths to bootstrap a self-hosted instance:
 
 ### Invite-Only After Setup
 
-After the first user exists, new users can only be added via `POST /api/users/invite` (requires admin role). Both the setup wizard and the signup endpoint are locked.
+After the first user exists, new users can be added through public signup or `POST /api/users/invite` (requires admin role). Set `WORKSPACE_REGISTRATION_ENABLED=false` to disable public signup. The setup wizard remains locked after the first user.
 
 ### No Email Verification
 
@@ -195,6 +195,12 @@ openssl rand -base64 32
 | `RESEND_SYSTEM_API_KEY` | Commercial: yes. Self-hosted: no | API key for sending system emails (invites, password resets, verification). In self-hosted mode, this can alternatively be set via the setup wizard UI, which stores it encrypted in the `system_settings` database table. When both the env var and DB value exist, the env var takes precedence |
 | `SYSTEM_FROM_ADDRESS` | Commercial: yes. Self-hosted: no | Sender address for system emails (e.g., `noreply@yourdomain.com`). Read in both modes -- in self-hosted mode it serves as a fallback when no value is configured in `system_settings` via the UI |
 
+### Self-Hosted Registration
+
+| Variable | Description |
+|----------|-------------|
+| `WORKSPACE_REGISTRATION_ENABLED` | Defaults to `true` in this fork. Set to `false` to close public account and workspace registration |
+
 ### Stripe (Commercial Only)
 
 | Variable | Description |
@@ -235,7 +241,7 @@ All accept Go duration strings (e.g., `1h`, `5m`, `30s`).
 |----------|-------------|------------|
 | Mode trigger | `STRIPE_KEY` absent | `STRIPE_KEY` present |
 | First-run setup | Setup wizard or first-user signup | Standard signup |
-| Signup after first user | Disabled (`403`) | Open registration |
+| Signup after first user | Open by default; set `WORKSPACE_REGISTRATION_ENABLED=false` to close | Open registration |
 | Email verification | Skipped (always `email_verified = true`) | Required (6-digit code) |
 | Billing / Stripe | No plan enforcement | Active plan required (`RequirePlan`) |
 | Billing endpoints | Registered but non-functional | Fully functional |
@@ -258,7 +264,8 @@ Response:
 {
   "api_url": "http://localhost:3000",
   "ws_url": "ws://localhost:3000",
-  "commercial": false
+  "commercial": false,
+  "registration_enabled": true
 }
 ```
 
@@ -267,8 +274,9 @@ Response:
 | `api_url` | string | Same as `APP_URL` |
 | `ws_url` | string | `APP_URL` with the scheme converted to `ws://` or `wss://` |
 | `commercial` | boolean | `true` when `STRIPE_KEY` is set, `false` otherwise |
+| `registration_enabled` | boolean | `true` when commercial mode or `WORKSPACE_REGISTRATION_ENABLED=true` enables signup |
 
-The frontend uses `commercial` to conditionally show billing UI, signup forms, and verification flows.
+The frontend uses `commercial` for billing and verification UI, and `registration_enabled` for signup and workspace creation.
 
 ---
 

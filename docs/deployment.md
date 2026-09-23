@@ -53,6 +53,7 @@ When `STRIPE_KEY` is set (non-empty), the backend requires all of the following 
 | `API_PORT` | `8080` | Backend listen port inside the container |
 | `TRASH_COLLECTOR_ENABLED` | `false` | Enable automatic purging of expired trash items |
 | `EVENT_RETENTION_DAYS` | `90` | Days to keep WebSocket events before pruning |
+| `WORKSPACE_REGISTRATION_ENABLED` | `true` | Public account and workspace registration in self-hosted mode; set to `false` to close it |
 
 ### Worker Intervals (all optional, Go duration strings)
 

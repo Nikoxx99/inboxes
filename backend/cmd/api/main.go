@@ -142,15 +142,16 @@ func main() {
 
 	// Router
 	r := router.New(pool, rdb, encSvc, resendSvc, bus, wsHub, orgLimiterMap, router.Config{
-		Secret:              cfg.SessionSecret,
-		AppURL:              cfg.AppURL,
-		PublicURL:           cfg.PublicURL,
-		StripeKey:           cfg.StripeKey,
-		StripePriceID:       cfg.StripePriceID,
-		StripeWebhookSecret: cfg.StripeWebhookSecret,
-		EventCatchupMaxAge:  cfg.EventCatchupMaxAge,
-		AppCtx:              ctx,
-		MCP:                 mcpSrv,
+		Secret:                       cfg.SessionSecret,
+		AppURL:                       cfg.AppURL,
+		PublicURL:                    cfg.PublicURL,
+		StripeKey:                    cfg.StripeKey,
+		StripePriceID:                cfg.StripePriceID,
+		StripeWebhookSecret:          cfg.StripeWebhookSecret,
+		WorkspaceRegistrationEnabled: cfg.WorkspaceRegistrationEnabled,
+		EventCatchupMaxAge:           cfg.EventCatchupMaxAge,
+		AppCtx:                       ctx,
+		MCP:                          mcpSrv,
 	})
 
 	// Server

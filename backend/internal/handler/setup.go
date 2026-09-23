@@ -16,12 +16,13 @@ import (
 )
 
 type SetupHandler struct {
-	Store     store.Store
-	EncSvc    *service.EncryptionService
-	ResendSvc *service.ResendService
-	Secret    string
-	AppURL    string
-	StripeKey string
+	Store                        store.Store
+	EncSvc                       *service.EncryptionService
+	ResendSvc                    *service.ResendService
+	Secret                       string
+	AppURL                       string
+	StripeKey                    string
+	WorkspaceRegistrationEnabled bool
 }
 
 // Status returns whether the self-hosted instance needs initial setup.
@@ -30,6 +31,7 @@ func (h *SetupHandler) Status(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]interface{}{
 			"needs_setup":             false,
 			"commercial":              true,
+			"registration_enabled":    true,
 			"system_email_configured": true,
 		})
 		return
@@ -46,6 +48,7 @@ func (h *SetupHandler) Status(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"needs_setup":             count == 0,
 		"commercial":              false,
+		"registration_enabled":    h.WorkspaceRegistrationEnabled,
 		"system_email_configured": h.ResendSvc.HasSystemKey(ctx),
 	})
 }
