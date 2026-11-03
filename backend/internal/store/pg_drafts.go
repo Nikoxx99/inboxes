@@ -11,7 +11,14 @@ func (s *PgStore) ListDrafts(ctx context.Context, userID, orgID, domainID string
 	query := `SELECT id, domain_id, thread_id, kind, subject, from_address,
 		to_addresses, cc_addresses, bcc_addresses, body_html, body_plain,
 		created_at, updated_at, COALESCE(attachment_ids, '[]'), in_reply_to, references_header, scheduled_send_at
-		FROM drafts WHERE user_id = $1 AND org_id = $2`
+		FROM drafts WHERE user_id = $1 AND org_id = $2
+		-- A draft whose immediate send is queued (undo window) or running is
+		-- about to be deleted by the worker; hide it so it cannot be reopened
+		-- and autosaved after it is gone. Scheduled sends stay listed.
+		AND NOT (scheduled_send_at IS NULL AND EXISTS (
+			SELECT 1 FROM email_jobs j
+			WHERE j.org_id = drafts.org_id AND j.status IN ('pending', 'running')
+			  AND j.job_type = 'send' AND j.draft_id = drafts.id))`
 	args := []any{userID, orgID}
 
 	if domainID != "" {
