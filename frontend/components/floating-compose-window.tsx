@@ -7,7 +7,7 @@ import { sanitizeLinkNode } from "@/lib/sanitize-links";
 import { useEmailWindow } from "@/contexts/email-window-context";
 import { useDomains } from "@/contexts/domain-context";
 import { usePreferences } from "@/contexts/preferences-context";
-import { api, uploadFileWithProgress } from "@/lib/api";
+import { api, ApiError, uploadFileWithProgress } from "@/lib/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import type { Draft, User } from "@/lib/types";
@@ -147,6 +147,7 @@ export function FloatingComposeWindow() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const dirtyRef = useRef(false);
+  const draftGoneRef = useRef(false);
   const saveAbortRef = useRef<AbortController | null>(null);
 
   // Alias state
@@ -218,6 +219,7 @@ export function FloatingComposeWindow() {
       sendingRef.current = false;
       setSaveStatus("");
       dirtyRef.current = false;
+      draftGoneRef.current = false;
       // Restore attachments from draft
       if (composeData.attachmentIds?.length) {
         Promise.all(
@@ -283,6 +285,7 @@ export function FloatingComposeWindow() {
       setAttachments([]);
       setUploading(false);
       dirtyRef.current = false;
+      draftGoneRef.current = false;
       setSending(false);
       sendingRef.current = false;
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -347,6 +350,7 @@ export function FloatingComposeWindow() {
 
     // Don't save empty drafts
     if (!subject && !bodyPlain && to.length === 0) return;
+    if (draftGoneRef.current) return;
 
     setSaveStatus("saving");
     try {
@@ -382,6 +386,18 @@ export function FloatingComposeWindow() {
       dirtyRef.current = false;
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
+      if (err instanceof ApiError && err.status === 404 && draftIdRef.current) {
+        // The draft was sent or deleted elsewhere (e.g. reopened during the
+        // undo window). Stop autosaving instead of recreating a copy of a
+        // sent email; the content stays on screen.
+        draftGoneRef.current = true;
+        draftIdRef.current = null;
+        setDraftId(null);
+        dirtyRef.current = false;
+        setSaveStatus("");
+        setError("This draft was already sent or deleted, so it is no longer saved.");
+        return;
+      }
       setSaveStatus("error");
     }
   }, [activeDomain, to, cc, bcc, subject, effectiveFrom, bodyHtml, bodyPlain, attachments, composeData, refreshDrafts]);
